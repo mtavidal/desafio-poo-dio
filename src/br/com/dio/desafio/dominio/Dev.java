@@ -1,11 +1,16 @@
 package br.com.dio.desafio.dominio;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.groupingBy;
 
 public class Dev {
     private String nome;
     private Set<Conteudo> conteudosInscritos = new LinkedHashSet<>();
     private Set<Conteudo> conteudosConcluidos = new LinkedHashSet<>();
+
+    private Set<Avaliacao> avaliacoesConcluidas = new LinkedHashSet<>();
 
     public void inscreverBootcamp(Bootcamp bootcamp){
         this.conteudosInscritos.addAll(bootcamp.getConteudos());
@@ -14,12 +19,27 @@ public class Dev {
 
     public void progredir() {
         Optional<Conteudo> conteudo = this.conteudosInscritos.stream().findFirst();
+
         if(conteudo.isPresent()) {
             this.conteudosConcluidos.add(conteudo.get());
             this.conteudosInscritos.remove(conteudo.get());
+            if(conteudo.get() instanceof Curso){
+                avaliacoesConcluidas.addAll(((Curso) conteudo.get()).getAvaliacoes());
+                Certificado certificado = new Certificado((Curso) conteudo.get(), this);
+                certificado.emitirCertificado();
+            } else{
+                System.out.println("---------------------------Mentoria " + conteudo.get().getTitulo() + " Concluída------------------");
+            }
         } else {
             System.err.println("Você não está matriculado em nenhum conteúdo!");
         }
+    }
+
+    public void avaliacoesRealizadas() {
+        int qntTeste = avaliacoesConcluidas.stream().collect(groupingBy(avaliacao -> avaliacao instanceof Teste)).size();
+        int qntDesafioProjeto = avaliacoesConcluidas.stream().collect(groupingBy(avaliacao -> avaliacao instanceof DesafioDeProjeto)).size();
+        int qntDesafioCodigo = avaliacoesConcluidas.stream().collect(groupingBy(avaliacao -> avaliacao instanceof DesafioDeCodigo)).size();
+        System.out.println("Avaliações realizadas: " + qntTeste + " teste(s), " + qntDesafioCodigo + " desafio(s) de código, "+ qntDesafioProjeto + " desafio(s) de projeto.");
     }
 
     public double calcularTotalXp() {
@@ -60,6 +80,14 @@ public class Dev {
 
     public void setConteudosConcluidos(Set<Conteudo> conteudosConcluidos) {
         this.conteudosConcluidos = conteudosConcluidos;
+    }
+
+    public Set<Avaliacao> getAvaliacoesConcluidas() {
+        return avaliacoesConcluidas;
+    }
+
+    public void setAvaliacoesConcluidas(Set<Avaliacao> avaliacoesConcluidas) {
+        this.avaliacoesConcluidas = avaliacoesConcluidas;
     }
 
     @Override
